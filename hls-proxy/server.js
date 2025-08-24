@@ -1,4 +1,5 @@
 // server.js — Proxy HLS muy simple + debug (Node 18+)
+// Usa concatenación en lugar de template literals en respuestas de error
 import express from "express";
 import { URL as NodeURL } from "url";
 
@@ -29,7 +30,7 @@ app.get("/debug", async (req, res) => {
     const r = await fetch(ORIG, { headers: COMMON_HEADERS, cache: "no-store" });
     const status = r.status;
     const txt = await r.text();
-    return res.json({ ok: r.ok, status, snippet: txt.slice(0, 600) });
+    return res.json({ ok: r.ok, status: status, snippet: txt.slice(0, 600) });
   } catch (e) {
     console.error("ERR debug:", e);
     return res.status(502).json({ ok: false, error: String(e) });
@@ -44,7 +45,7 @@ app.get("/stream.m3u8", async (req, res) => {
   const ORIG = "https://live20.bozztv.com/akamaissh101/ssh101/laradioenvivo/playlist.m3u8";
   try {
     const r = await fetch(ORIG, { headers: COMMON_HEADERS, cache: "no-store" });
-    if (!r.ok) return res.status(r.status).send(Origen respondió ${r.status});
+    if (!r.ok) return res.status(r.status).send('Origen respondió ' + r.status);
     let text = await r.text();
 
     const base = new NodeURL(ORIG);
@@ -55,7 +56,7 @@ app.get("/stream.m3u8", async (req, res) => {
       .map((line) => {
         if (line && !line.startsWith("#")) {
           const absolute = line.startsWith("http") ? line : new NodeURL(line, base).toString();
-          return ${req.protocol}://${req.get("host")}/seg?url=${encodeURIComponent(absolute)};
+          return req.protocol + "://" + req.get("host") + "/seg?url=" + encodeURIComponent(absolute);
         }
         return line;
       })
@@ -78,7 +79,7 @@ app.get("/seg", async (req, res) => {
   if (!u) return res.status(400).send("Falta parámetro url");
   try {
     const r = await fetch(u, { headers: COMMON_HEADERS, cache: "no-store" });
-    if (!r.ok) return res.status(r.status).send(Origen respondió ${r.status});
+    if (!r.ok) return res.status(r.status).send('Origen respondió ' + r.status);
     const type = r.headers.get("content-type") || "application/octet-stream";
     res.setHeader("Content-Type", type);
     res.setHeader("Cache-Control", "no-store");
@@ -90,4 +91,4 @@ app.get("/seg", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log("Proxy escuchando en puerto", PORT));
+app.listen(PORT, () => console.log("Proxy escuchando en puerto " + PORT));
