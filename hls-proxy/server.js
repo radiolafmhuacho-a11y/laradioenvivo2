@@ -91,4 +91,10 @@ app.get("/seg", async (req, res) => {
   }
 });
 
+// Alias cómodo: /proxy -> /stream.m3u8
+app.get('/proxy', (req,res)=>{
+  // redirige a la playlist interna
+  res.redirect('/stream.m3u8');
+});
+
 app.listen(PORT, () => console.log("Proxy escuchando en puerto " + PORT));
